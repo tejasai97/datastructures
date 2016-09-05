@@ -1,0 +1,1456 @@
+//*******************************************************
+//PROJECT ELECTONIC VOTING SYSTEM
+//*******************************************************
+
+//*******************************************************
+//INCLUDED HEADER FILES
+//*******************************************************
+
+#include <iostream.h>
+#include<fstream.h>
+#include<string.h>
+#include<stdlib.h>
+#include<stdio.h>
+#include<ctype.h>
+#include<conio.h>
+#include<dos.h>
+#include<io.h>
+
+//*******************************************************
+//This class control all the functions related to voter
+//*******************************************************
+
+class VOTER
+{
+	public:
+		void ADD_VOTER(void);
+		void VOTER_INFORMATION(void);
+		void VOTER_LIST(void);
+		void ISSUE_VOTING_CARD(void);
+		void RESET_STATUS(void);
+		void DELETE_VOTER(void);
+		void ELECTION(void);
+		void VOTE_CALCULATION(void);
+		void CALCULATE(char[]);
+	protected:
+		int DELETE_RECORD(char[]);
+		char voterno[6],name[26],address[36];
+		int status,cardstatus;
+};
+
+//*******************************************************
+//THIS CLASS CONTROL ALL THE FUNCTIONS RELATED TO //CANDIDATE
+//*******************************************************
+
+class CANDIDATE
+{
+	public:
+		void ADD_CANDIDATE(void);
+		void CANDIDATE_INFORMATION(void);
+		void VOTING_LIST(void);
+		int ADD_VOTES(int);
+		void RESET_STATUS(void);
+		void DELETE_CANDIDATE(void);
+	protected:
+		int DELETE_RECORD(int);
+		int foundstatus(char s1[15]);
+		char name[26],symbol[15],sno[5];
+		int votes;
+};
+
+//*******************************************************
+//THIS CLASS CONTROL ALL THE FUNCTIONS RELATED ELECTION //DATE
+//*******************************************************
+
+class VOTING_DATE
+{
+	public:
+		void SET_DATE(void);
+		int VALID_DATE(void);
+		char *RETURN_DATE(void);
+	private:
+		int dd,mm,yy;
+};
+
+//*******************************************************
+//THIS CLASS CONTROL ALL THE FUNCTIONS TO DRAW LINES //BOXES ETC
+//*******************************************************
+
+class DRAW
+{
+	public:
+		void LINE_HOR(int,int,int,char);
+		void LINE_VER(int,int,int,char);
+};
+
+//*******************************************************
+//THIS CLASS CONTROLTHE FUNCTION RELATED TO HELP
+//*******************************************************
+
+class EVS
+{
+	public:
+		void HELP(void);
+	private:
+		void REG_EVS(void);
+		void REG_REQUIRMENT(void);
+		void REG_MENUS(void);
+		void SPECIAL_INSTRUCTION(void);
+
+};
+
+//*******************************************************
+//FUNCTION TO DRAW HORIZONTOL LINE
+//*******************************************************
+
+void DRAW::LINE_HOR(int column1,int column2,int row,char c)
+{
+	for(column1;column1<=column2;column1++)
+		{
+			gotoxy(column1,row);
+			cout<<c;
+		}
+}
+
+//*******************************************************
+//FUNCTION TO DRAW VERTICAL LINE
+//*******************************************************
+
+void DRAW::LINE_VER(int row1,int row2,int column,char c)
+{
+	for(row1;row1<=row2;row1++)
+	{
+		gotoxy(column,row1);
+		cout<<c;
+	}
+}
+
+//*******************************************************
+//THIS CLASS CONTROL ALL THE FUNCTION RELATED TO MENU
+//*******************************************************
+
+class MENU
+{
+	public:
+		void COLOR_DISPLAY(char[]);
+		int PASSWORD(void);
+};
+
+	/********************************************/
+	/*    THIS FUNCTION DISPLAY'S COLOR TEXT    */
+	/********************************************/
+
+void MENU::COLOR_DISPLAY(char mess[])
+{
+	textbackground(YELLOW+RED);
+	textcolor(BLACK);
+	for(int i=0;mess[i]!='\0';i++)
+		cprintf("%c",mess[i]);
+		textbackground(BLACK);
+		textcolor(WHITE);
+}
+
+//*******************************************************
+//FUNCTION TO ADD VOTES IN VOTERS FILE
+//*******************************************************
+
+void VOTER::ADD_VOTER(void)
+{
+	char ch;
+	do
+	{
+		clrscr();
+		gotoxy(27,1);
+		textcolor(BLINK+LIGHTGRAY);
+		cprintf("**** ADDITION OF VOTERS ****");
+		textcolor(LIGHTGRAY);
+		int found=0;
+		char vno[6];
+		do
+		{
+			gotoxy(10,8);
+			clreol();
+			cout<<"Enter voter number:";
+			gets(vno);
+			if(vno[0]=='0')
+			return;
+			found=0;
+			fstream f;
+			f.open("VOTER.DAT",ios::in);
+			if(f.fail())
+			break;
+			while(f.read((char*)this,sizeof(VOTER)))
+			if(!strcmpi(voterno,vno))
+			{
+				found=1;
+				break;
+			}
+			f.close();
+			if(found)
+			{
+				gotoxy(10,8);
+				clreol();
+				cout<<"Voter number already exist:";
+				getch();
+			}
+		}while(found);
+		gotoxy(10,10);
+		cout<<"Enter name of the voter:     ";
+		gets(name);
+		gotoxy(10,11);
+		cout<<"Enter address of the voter:   ";
+		gets(address);
+		status=0;
+		cardstatus=0;
+		gotoxy(8,13);
+		cout<<"Save voter record!(y/n):";
+		ch=getche();
+		if(ch=='y'||ch=='Y')
+		{
+			strcpy(voterno,vno);
+			fstream f;
+			f.open("VOTER.DAT",ios::app);
+			f.write((char*)this,sizeof(VOTER));
+			f.close();
+		}
+		gotoxy(8,15);
+		cout<<"Add more!(y/n):";
+		ch=getche();
+	}while(ch=='y'||ch=='Y');
+}
+
+//*******************************************************
+//FUNCTION TO DISPLAY THE VOTER'S LIST
+//*******************************************************
+
+void VOTER::VOTER_LIST(void)
+{
+	clrscr();
+	int row=5,found=0,flag=0;
+	char ch;
+	textcolor(BLINK+LIGHTGRAY);
+	gotoxy(29,1);
+	cprintf("*** List of voters ***");
+	textcolor(LIGHTGRAY);
+	gotoxy(1,3);
+	cout<<"VOTE NO.     VOTER NAME       VOTER ADDRESS    CARD ISSUED";
+	gotoxy(1,4);
+	cout<<"___________________________________________";
+	fstream f;
+	f.open("VOTER.DAT",ios::in);
+	while(f.read((char*)this,sizeof(VOTER)))
+	{
+		flag=0;
+		delay(20);
+		found=1;
+		gotoxy(1,row);
+		cout<<voterno;
+		gotoxy(15,row);
+		cout<<name;
+		gotoxy(34,row);
+		cout<<address;
+		gotoxy(50,row);
+		if(cardstatus)
+		cout<<"YES";
+			else
+				cout<<"NO";
+		if(row==23)
+		{
+			flag=1;
+			row=5;
+			gotoxy(1,25);
+			cout<<"Press any key to continue or <ESC>to exit";
+			ch=getch();
+			if(ch==27)
+			clrscr();
+			cout<<"VOTER NO	    	VOTER NAME	VOTER ADDRESS		CARD ISSUED";
+			gotoxy(1,4);
+			cout<<"___________________________________________";
+		}
+		else
+			row++;
+	}
+	if(!found)
+	{
+		gotoxy(5,10);
+		cout<<"\7 RECORD NOT FOUND";
+	}
+	if(!flag)
+	{
+		gotoxy(1,25);
+		cout<<"PRESS ANY KEY TO CONTINUE ";
+		getch();
+	}
+	f.close();
+}
+
+//*******************************************************
+//FUNCTION TO DISLAY THE VOTER INFORMATION
+//*******************************************************
+
+void VOTER::VOTER_INFORMATION(void)
+{
+	clrscr();
+	textcolor(BLINK+LIGHTGRAY);
+	gotoxy(27,1);
+	cprintf("*** VOTER INFORMATION ***");
+	textcolor(LIGHTGRAY);
+	char vno[6];
+	gotoxy(5,5);
+	cout<<"Enter voter no. or press <ENTER> to see list :";
+	gets(vno);
+	if(vno[0]=='0')
+	return;
+	if(strlen(vno)==0)
+	{
+		VOTER_LIST();
+		return;
+	}
+	int found=0;
+	fstream f;
+	f.open("VOTER.DAT",ios::in);
+	while(f.read((char*)this,sizeof(VOTER)))
+	{
+		if(!strcmpi(vno,voterno))
+		{
+			found=1;
+			gotoxy(10,8);
+				cout<<"VOTER NO.    "<<voterno;
+			gotoxy(10,10);
+				cout<<"VOTER NAME   "<<name;
+			gotoxy(10,11);
+				cout<<"VOTER ADDRESS  "<<address;
+			gotoxy(10,13);
+			if(cardstatus)
+				cout<<"VOTING CARD ISSUESD:  YES";
+			else
+				cout<<"VOTING CARD ISSUED :NO";
+			gotoxy(10,14);
+			if(status)
+				cout<<"VOTE GIVEN     YES";
+			else
+			cout<<"VOTE GIVEN      NO";
+			break;
+		}
+	}
+	f.close();
+	if(!found)
+	{
+		gotoxy(5,20);
+		cout<<"\7 VOTING NO. NOT FOUND";
+	}
+	gotoxy(5,24);
+	cout<<"PLEASE ANY KEY TO CONTINUE:";
+	getch();
+}
+
+//*******************************************************
+//FUNCTION TO RESET ALL THE STATUS IN THE VOTER'S FILE
+//*******************************************************
+
+void VOTER::RESET_STATUS(void)
+{
+	fstream file;
+	file.open("VOTER.DAT",ios::in);
+	if(file.fail())
+	return;
+	fstream temp;
+	temp.open("temp.dat",ios::out);
+	while(file.read((char*)this,sizeof(VOTER)))
+	{
+		status=0;
+		temp.write((char*)this,sizeof(VOTER));
+	}
+	file.close();
+	temp.close();
+	file.open("VOTER.DAT",ios::out);
+	temp.open("temp.dat",ios::in);
+	while(temp.read((char*)this,sizeof(VOTER)))
+	file.write((char*)this,sizeof(VOTER));
+	file.close();
+	temp.close();
+}
+
+//*******************************************************
+//FUNCTION TO ISSUE THE VOTING CARDS TO THE VOTERS
+//*******************************************************
+
+void VOTER::ISSUE_VOTING_CARD(void)
+{
+	clrscr();
+	textcolor(BLINK+LIGHTGRAY);
+	gotoxy(27,1);
+	cprintf("*** ISSUE VOTINHG CARD ***");
+	textcolor(LIGHTGRAY);
+	char vno[6];
+	gotoxy(5,5);
+		cout<<"Enter vote number or press <ENTER> to exit:";
+	gets(vno);
+	if(strlen(vno)==0)
+	return;
+	int found=0,count=0;
+	fstream f;
+	f.open("VOTER.DAT",ios::in);
+	while(f.read((char*)this,sizeof(VOTER)))
+	{
+		count++;
+		if(!strcmpi(vno,voterno))
+		{
+			found=1;
+			if(cardstatus==1)
+			{
+				gotoxy(5,10);
+					cout<<"\7 VOTING CARD ALREADY ISSUED:";
+				getch();
+				return;
+			}
+			break;
+		}
+	}
+	f.close();
+	if(found)
+	{
+		int i=0;
+		f.open("VOTER.DAT",ios::in);
+		fstream temp;
+		temp.open("temp.dat",ios::out);
+		while(f.read((char*)this,sizeof(VOTER)))
+		{
+			i++;
+			if(count==i)
+			{
+				cardstatus=1;
+				temp.write((char*)this,sizeof(VOTER));
+			}
+			else
+				temp.write((char*)this,sizeof(VOTER));
+		}
+		f.close();
+		temp.close();
+		f.open("VOTER.DAT",ios::out);
+		temp.open("temp.dat",ios::in);
+		while(temp.read((char*)this,sizeof(VOTER)))
+		f.write((char*)this,sizeof(VOTER));
+		f.close();
+		temp.close();
+	}
+	else
+		{
+		gotoxy(5,20);
+		cout<<"\7 vote no. not found ";
+		}
+		gotoxy(5,20);
+		cout<<"Press any key to contiue";
+		getch();
+}
+
+//*******************************************************
+//FUNCTION TO GIVE VOTES BY THE VOTERS
+//*******************************************************
+
+void VOTER::ELECTION(void)
+{
+	clrscr();
+	char dt[12];
+	textcolor(BLINK+LIGHTGRAY);
+	gotoxy(32,1);
+	cprintf("****** ELECTION ******");
+	textcolor(LIGHTGRAY);
+	fstream f;
+	f.open("ELEDATE.DAT",ios::in);
+	if(f.fail())
+	{
+		gotoxy(5,20);
+		cout<<"\7 ELECTION DATE IS NOT SET ";
+		getch();
+		return;
+	}
+	f.close();
+	VOTING_DATE voting_date;
+	gotoxy(5,3);
+		cout<<"Election date:     ";
+		gotoxy(20,3);
+		cout<<voting_date.RETURN_DATE();
+		if(!voting_date.VALID_DATE())
+	{
+		gotoxy(8,20);
+		cout<<"\7 SOORY! Today is not an election date";
+		getch();
+		return;
+	}
+	char ch,vno[6];
+	do
+	{
+		gotoxy(5,8);
+		clreol();
+			cout<<"Enter voter number or press <ENTER> to exit:";
+		gets(vno);
+		if(strlen(vno)==0)
+		return;
+		int count=0,found=0,valid=1;
+		f.open("VOTER.DAT",ios::in);
+		while(f.read((char*)this,sizeof(VOTER)))
+		{
+			count++;
+			if(!strcmpi(vno,voterno))
+			{
+				found=1;
+				break;
+			}
+		}
+		f.close();
+		if(found)
+		{
+			if(cardstatus==0)
+			{
+				valid=0;
+				gotoxy(5,20);
+				cout<<"\7 Voting card not issued:";
+				getch();
+			}
+			if(status==1)
+			{
+			valid=0;
+			gotoxy(5,20);
+			cout<<"\7 Vote already given";
+			getch();
+		}
+		if(valid)
+		{
+			int i=0;
+			f.open("VOTER.DAT",ios::in);
+			fstream temp;
+			temp.open("temp.dat",ios::out);
+			while(f.read((char*)this,sizeof(VOTER)))
+			{
+				i++;
+				if(count==i)
+				{
+					status=1;
+					temp.write((char*)this,sizeof(VOTER));
+				}
+				else
+					temp.write((char*)this,sizeof(VOTER));
+			}
+			f.close();
+			temp.close();
+			f.open("VOTER.DAT",ios::out);
+			temp.open("temp.dat",ios::in);
+			while(temp.read((char*)this,sizeof(VOTER)))
+			f.write((char*)this,sizeof(VOTER));
+			f.close();
+			temp.close();
+			gotoxy(5,20);
+			cout<<"\7 VOTE GIVEN:";
+		}
+	}
+	else
+	{
+		gotoxy(5,20);
+		cout<<"7 VOTER NUMBER NOT FOUND";
+		getch();
+	}
+		gotoxy(5,20);
+		clreol();
+		cout<<"MORE  !(Y/N)";
+		ch=getche();
+		gotoxy(5,20);
+		clreol();
+	}while(ch=='y'||ch=='Y');
+}
+
+//*******************************************************
+//FUNCTION TO DELETE VOTER RECORD FOR THE GIVEN VOTER //NAME
+//*******************************************************
+
+int VOTER::DELETE_RECORD(char vno[6])
+{
+	fstream file;
+	file.open("VOTER.DAT",ios::in);
+	fstream temp;
+	temp.open("temp.dat",ios::out);
+	int found=0;
+	while(file.read((char*)this,sizeof(VOTER)))
+	{
+		if(!strcmpi(voterno,vno))
+		found=1;
+		else
+			temp.write((char*)this,sizeof(VOTER));
+	}
+	file.close();
+	temp.close();
+	if(!found)
+	return 0;
+	file.open("VOTER.DAT",ios::out);
+	temp.open("temp.dat",ios::in);
+	while(temp.read((char*)this,sizeof(VOTER)))
+	file.write((char*)this,sizeof(VOTER));
+	file.close();
+	temp.close();
+	return 1;
+ }
+ //*******************************************************
+ //FUNCTION TO GIVE THE VOTER NAME TO DELETE VOTER RECORD
+//*******************************************************
+
+ void VOTER::DELETE_VOTER(void)
+ {
+	clrscr();
+	textcolor(BLINK+LIGHTGRAY);
+	gotoxy(27,1);
+	cprintf("*** DELETION OF VOTER ***");
+	textcolor(LIGHTGRAY);
+	char vno[6];
+	gotoxy(5,5);
+	clreol();
+		cout<<"Enter voter number or press <ENTER> to exit:";
+	gets(vno);
+	if(strlen(vno)==0)
+	return;
+	gotoxy(5,20);
+	if(!DELETE_RECORD(vno))
+		cout<<"\7 VOTER NUMBER NOT FOUND";
+	else
+		cout<<"\7 VOTER RECORD DELETED";
+	getch();
+ }
+ //*******************************************************
+//FUNCTION TO CALCULATE THE VOTES GIVEN BY THE VOTES
+//*******************************************************
+
+ void VOTER::VOTE_CALCULATION(void)
+ {
+	clrscr();
+	CANDIDATE candidate;
+	int sno=0,valid=0,found=0;
+	fstream f;
+	f.open("VOTER.DAT",ios::in);
+	while(f.read((char*)this,sizeof(VOTER)))
+	{
+		sno++;
+		if(status)
+		{
+			found=1;
+			gotoxy(3,21);
+			clreol();
+			cout<<"Voter Number:   "<<voterno;
+			candidate.VOTING_LIST();
+			do
+			{
+				valid=1;
+				gotoxy(3,23);
+				clreol();
+				cout<<"Vote in the favour of:(enter S. NUMBER)";
+				cin>>sno;
+				if(!candidate.ADD_VOTES(sno))
+				{
+					valid=0;
+					gotoxy(3,23);
+					clreol();
+					cout<<"\7 S.NO not found";
+					exit(0);
+					getch();
+				}
+			}while(!valid);
+		}
+	}
+		if(!found)
+		{
+			gotoxy(1,23);
+			clreol();
+			cout<<"\7 No voter has given vote";
+			getch();
+			return;
+		 }
+		 candidate.VOTING_LIST();
+		 gotoxy(1,23);
+		 clreol();
+		 gotoxy(3,23);
+		 clreol();
+		 cout<<"\7 VOTE CALCULATION COMLETE";
+		 candidate.RESET_STATUS();
+		 getch();
+	}
+ //*******************************************************
+//FUNCTION TO DISLAY THE CANDIDATE INFORMATION //*******************************************************
+
+ void CANDIDATE::CANDIDATE_INFORMATION(void)
+ {
+	clrscr();
+	int row=5,found=0,sno=0;
+	char ch;
+	textcolor(BLINK+LIGHTGRAY);
+	gotoxy(27,1);
+	cprintf("*** LIST OF CANDIDATES ***");
+	textcolor(LIGHTGRAY);
+	gotoxy(1,3);
+	cout<<" SNO.    CANDIDATE NAME	               SYMBOL";
+	gotoxy(1,4);
+	cout<<"___________________________________________";
+	fstream f;
+	f.open("CAN.DAT",ios::in);
+	while(f.read((char*)this,sizeof(CANDIDATE)))
+	{
+		delay(20);
+		sno++;
+		found=1;
+		gotoxy(2,row);
+		cout<<sno;
+		gotoxy(10,row);
+		cout<<name;
+		gotoxy(44,row);
+		cout<<symbol;
+		row++;
+	}
+	if(!found)
+	{
+		gotoxy(5,10);
+			cout<<"\7 RECORD NOT FOUND";
+	}
+ }
+int CANDIDATE::foundstatus(char s1[15])
+{
+	int f1=0;
+	fstream f;
+	f.open("CAN.DAT",ios::in);
+	while(f.read((char*)this,sizeof(CANDIDATE)))
+		if(!strcmpi(symbol,s1))
+		{
+			f1=1;
+			break;
+		}
+	f.close();
+	return f1;
+ }
+
+//*******************************************************
+//FUNCTION TO ADD CANDIDARE RECORD IN THE CANDIDATE FILE
+//*******************************************************
+
+void CANDIDATE::ADD_CANDIDATE(void)
+{
+	char ch;
+	do
+	{
+		int count=0,sno;
+		char n1[25];
+		fstream f;
+		f.open("CAN.DAT",ios::in);
+		while(f.read((char*)this,sizeof(CANDIDATE)))
+		count++;
+		f.close();
+		if(count>=15)
+		{
+			cout<<"\7 No. of candidates are 15, No more candidate can be added";
+			getch();
+			return;
+		}
+		clrscr();
+		gotoxy(25,1);
+		textcolor(BLINK+LIGHTGRAY);
+		cprintf("*** ADDITION OF CANDIDATES ***");
+		textcolor(LIGHTGRAY);
+         gotoxy(10,6);
+         cout<<”Enter serial Number:    “;
+         cin>>sno;
+		gotoxy(10,8);
+		cout<<"Enter name of the candidate:    ";
+		gets(n1);
+		int valid;
+		char s2[15];
+		do
+		{
+			valid=1;
+			gotoxy(10,10);
+			clreol();
+			cout<<"Enter symbol name:    ";
+			gets(s2);
+			if(foundstatus(s2))
+			{
+				valid=0;
+				gotoxy(10,10);
+				clreol();
+				cout<<"Symbol already exist";
+				getch();
+			}
+		}while(!valid);
+		strcpy(symbol,s2);
+		strcpy(name,n1);
+		votes=0;
+		gotoxy(8,13);
+		cout<<"Save candidate record!(Y/N):";
+		ch=getch();
+		if(ch=='y'||ch=='Y')
+		{
+			fstream f;
+			f.open("CAN.DAT",ios::app);
+			f.write((char*)this,sizeof(CANDIDATE));
+			f.close();
+		}
+		gotoxy(8,15);
+		cout<<"ADD MORE,(Y/N):";
+		ch=getche();
+	}while(ch=='y'||ch=='Y');
+}
+
+//*******************************************************
+//FUNCTION TO RESET VOTES RECEVIED BY CANDIDATE TO ZERO
+//*******************************************************
+
+void CANDIDATE::RESET_STATUS(void)
+{
+	fstream file;
+	file.open("CAN.DAT",ios::in);
+	if(file.fail())
+	return;
+	fstream temp;
+	temp.open("temp.dat",ios::out);
+	file.seekg(0,ios::beg);
+	while(!file.eof())
+	{
+		file.read((char*)this,sizeof(CANDIDATE));
+		if(file.eof())
+			break;
+		votes=0;
+		temp.write((char*)this,sizeof(CANDIDATE));
+	}
+	file.close();
+	temp.close();
+	file.open("CAN.DAT",ios::out);
+	temp.open("temp.dat",ios::in);
+	temp.seekg(0,ios::beg);
+	while(!temp.eof())
+	{
+		temp.read((char*)this,sizeof(CANDIDATE));
+		if(temp.eof())
+		break;
+		file.write((char*)this,sizeof(CANDIDATE));
+	}
+	file.close();
+	temp.close();
+}
+
+//*******************************************************
+//FUNCTION TO DISLAY THE LIST OF THE VOTES RECEIVED BY //CANDIDATE
+//*******************************************************
+
+void CANDIDATE::VOTING_LIST(void)
+{
+	int row=5,sno=0;
+	textcolor(BLINK+LIGHTGRAY);
+	gotoxy(28,1);
+	cprintf("**** VOTE CALCULATION ****");
+	textcolor(LIGHTGRAY);
+	gotoxy(1,3);
+	cout<<"SNO    CANDIDATE NAME           SYMBOL		VOTES";
+	gotoxy(1,4);
+	cout<<"___________________________________________";
+	fstream f;
+	f.open("CAN.DAT",ios::in);
+	while(f.read((char*)this,sizeof(CANDIDATE)))
+	{
+
+		delay(20);
+		sno++;
+		gotoxy(2,row);
+		cout<<sno;
+		gotoxy(10,row);
+		cout<<name;
+		gotoxy(33,row);
+		cout<<symbol;
+		gotoxy(55,row);
+		cout<<votes;
+		row++;
+	}
+	f.close();
+}
+
+//*******************************************************
+//FUNCTION TO ADD VOTES IN THE FAVOUR OF GIVEN CANDIDATE
+//*******************************************************
+
+int CANDIDATE::ADD_VOTES(int sno)
+{
+	fstream file;
+	file.open("CAN.DAT",ios::in);
+	fstream temp;
+	temp.open("temp.dat",ios::out);
+	int i=0,found=0;
+	while(!file.eof())
+	{
+		file.read((char*)this,sizeof(CANDIDATE));
+		i++;
+		if(file.eof())
+			break;
+		if(sno==i)
+		{
+			found=1;
+			votes++;
+		}
+		temp.write((char*)this,sizeof(CANDIDATE));
+	}
+	file.close();
+	temp.close();
+	if(!found)
+		return 0;
+	file.open("CAN.DAT",ios::out);
+	temp.open("temp.dat",ios::in);
+	while(!temp.eof())
+	{
+		temp.read((char*)this,sizeof(CANDIDATE));
+		if(temp.eof())
+			break;
+		file.write((char*)this,sizeof(CANDIDATE));
+	}
+	file.close();
+	temp.close();
+	return 1;
+}
+
+//*******************************************************
+//FUNCTION TO DELETE RECORD OF THE GIVEN CANDIDATE
+//*******************************************************
+
+int CANDIDATE::DELETE_RECORD(int sno)
+{
+	fstream file;
+	file.open("CAN.DAT",ios::in);
+	fstream temp;
+	temp.open("temp.dat",ios::out);
+	int found=0,count=0;
+	while(file.read((char*)this,sizeof(CANDIDATE)))
+	{
+		count++;
+		if(sno==count)
+		found=1;
+		else
+			temp.write((char*)this,sizeof(CANDIDATE));
+	}
+	file.close();
+	temp.close();
+	if(!found)
+	return 0;
+	file.open("CAN.DAT",ios::out);
+	temp.open("temp.dat",ios::in);
+	while(temp.read((char*)this,sizeof(CANDIDATE)))
+	file.write((char*)this,sizeof(CANDIDATE));
+	file.close();
+	temp.close();
+	return 1;
+}
+
+//*******************************************************
+//FUNCTION TO GIVE CANDIDATE Sno. TO DELETE RECORD
+//*******************************************************
+
+void CANDIDATE::DELETE_CANDIDATE(void)
+{
+	clrscr();
+	fstream f;
+	f.open("CAN.DAT",ios::in);
+	if(f.fail())
+	{
+		gotoxy(5,5);
+		cout<<"CANDIDATES NOT FOUND  ";
+		getch();
+		return;
+	}
+	f.close();
+	CANDIDATE_INFORMATION();
+	int sno;
+	gotoxy(3,23);
+	cout<<"Enter Sno of the candidate to be deleted:";
+	cin>>sno;
+	if(!DELETE_RECORD(sno))
+	{
+		gotoxy(3,23);
+		clreol();
+		cout<<"\7 Sno. not found";
+		getch();
+		return;
+	}
+	CANDIDATE_INFORMATION();
+	gotoxy(3,23);
+	clreol();
+	cout<<"RECORD DELETED";
+	getch();
+}
+
+//*******************************************************
+//FUNCTION TO RETURN THE ELECTION DATE
+//*******************************************************
+
+char *VOTING_DATE::RETURN_DATE(void)
+{
+	fstream f;
+	f.open("ELEDATE.DAT",ios::in);
+	f.read((char*)this,sizeof(VOTING_DATE));
+	f.close();
+	char dt[12];
+	sprintf(dt,"%d %d %d",dd,mm,yy);
+	return dt;
+}
+
+//*******************************************************
+//FUNCTION TO RETURN THE VALIDITY OF THE TODAY DATE
+//*******************************************************
+
+int VOTING_DATE::VALID_DATE(void)
+{
+	fstream f;
+	f.open("ELEDATE.DAT",ios::in);
+	f.read((char*)this,sizeof(VOTING_DATE));
+	f.close();
+	int d1,m1,y1,valid=1;
+	struct date d;
+	getdate(&d);
+	d1=d.da_day;
+	m1=d.da_mon;
+	y1=d.da_year;
+	if((d1!=dd)||(m1!=mm)||(y1!=yy))
+	valid=0;
+	return valid;
+}
+
+//*******************************************************
+//FUNCTION TO SET THE DATE FOR THE NEW ELECTION
+//*******************************************************
+
+void VOTING_DATE::SET_DATE(void)
+{
+	clrscr();
+	int d1,m1,y1,d2,m2,y2;
+	struct date d;
+	getdate(&d);
+	d1=d.da_day;
+	m1=d.da_mon;
+	y1=d.da_year;
+	gotoxy(26,1);
+	textcolor(BLINK+LIGHTGRAY);
+	cprintf("*** SET NEW VOTING DATE ****");
+	textcolor(LIGHTGRAY);
+	gotoxy(8,8);
+	clreol();
+	cout<<"ENTER NEW VOTING DATE(dd mm yyyy):";
+	cin>>d2>>m2>>y2;
+	if((y2<y1)||(y2==y1)&&(m2<m1)||(y2==y1)&&(m2==m1)&&(d2<d1))
+	{
+		gotoxy(5,20);
+		cout<<"\7 INVALID DATE";
+		getch();
+		return;
+	}
+	dd=d2;
+	mm=m2;
+	yy=y2;
+	fstream f;
+	f.open("ELEDATE.DAT",ios::out);
+	f.write((char*)this,sizeof(VOTING_DATE));
+	f.close();
+	f.open("ELEDATE.DAT",ios::in);
+	f.read((char*)this,sizeof(VOTING_DATE));
+	{
+		clreol();
+		cout<<dd<<"/"<<mm<<"/"<<yy;
+		getch();
+	}
+	f.close();
+	VOTER voter;
+	voter.RESET_STATUS();
+	CANDIDATE candidate;
+	candidate.RESET_STATUS();
+}
+   /*******************************************************/
+// THIS FUNCTION CONTROL ALL THE FUNCTION REGARDING HELP
+/*******************************************************/
+
+void EVS::HELP()
+{
+	EVS obj;
+	int ch=0;
+	MENU menu;
+	DRAW d,draw;
+	while(1)
+	{
+		clrscr();
+		gotoxy(30,11);
+		cout<<"1::REGARDING PROJECT";
+		gotoxy(30,12);
+		cout<<"2::REGARDING REQUIRMENTS";
+		gotoxy(30,13);
+		cout<<"3::SPECIAL INSTRUCTIONS";
+		gotoxy(30,14);
+		cout<<"4::ABOUT MENUS";
+		gotoxy(30,15);
+		cout<<"0::RETURN";
+		gotoxy(32,8);
+		cout<<"HELP";
+		d.LINE_HOR(31,38,9,196);
+		d.LINE_VER(2,24,2,219);
+		d.LINE_VER(2,24,78,219);
+		draw.LINE_HOR(2,79,2,219);
+		draw.LINE_HOR(2,79,24,219);
+		draw.LINE_VER(2,79,24,219);
+		draw.LINE_VER(2,24,79,219);
+		gotoxy(32,8);
+		cout<<"HELP ";
+		gotoxy(28,18);
+		menu.COLOR_DISPLAY("ENTER YOUR CHOICE:: ");
+		ch=getch();
+		if(ch=='1')
+		      REG_EVS();
+		else
+		if(ch=='2')
+		      REG_REQUIRMENT();
+		else
+		if(ch=='3')
+		      SPECIAL_INSTRUCTION();
+		else
+		if(ch=='4')
+			 REG_MENUS();
+		if(ch=='0')
+			break;
+	}
+}
+     /******************************************************/
+/* THIS FUNCTION DISPLAY INFORMATION ABOUT ELECTRONIC VOTING SYSTEM */
+ /******************************************************/
+
+void EVS::REG_EVS()
+{
+	clrscr();
+	gotoxy(32,1);
+	cout<<"*******************************************";
+	gotoxy(32,2);
+	cout<<"*   ELECTRONIC VOTING SYSTEM    *";
+	gotoxy(32,3);
+	cout<<"*******************************************";
+	gotoxy(9,5);
+	cout<<"THIS FUNCTION OF COMPILING, EDITING AND PROCESSING DATA MAKES";
+	gotoxy(9,7);
+	cout<<"THE VOTING SYSTEM COMPLICATED AND TEDIOUS PROCESS.  ELECTRONIC";
+	gotoxy(9,9);
+	cout<<"VOTING SYSTEM IS AN EFFORT IN THE DIRECTION TO USE COMPUTER FOR ";
+	gotoxy(9,11);
+	cout<<"THE PURPOSE OF VOTING SYSTEM. IT IS BOTH USE FRIENDLY AS WELL";
+	gotoxy(9,13);
+	cout<<"AS TIME SAVING";
+	gotoxy(9,15);
+	cout<<"THIS IS A FOUNDATION LEVEL. EMPHASIS HAS BEEN GIVEN IN THIS";
+	gotoxy(9,17);
+	cout<<"APPLICATION TO REPLICATE ALL THE PROCESS REQUIRED IN A TRADITIONAL";
+	gotoxy(9,19);
+	cout<<"SYSTEM. EVM SYSTEM IS SELF-SUFFICIENT WITH ALL THE INFORMATION .";
+	gotoxy(9,20);
+	cout<<"REQUIRED ABOUT THE VOTERS, CANDIDATE AND THE VOTES. ONCE THE INFORMATION";
+	gotoxy(9,21);
+	cout<<"IS FED TO THE SYSTEM.IT CAN IDENTIFY INDIVIDUAL VOTERS,THEIR VOTES";
+	gotoxy(9,22);
+	cout<<"AND THE CANDIDATES.TEDIOUS FUNCTION SUCH AS COUNTING THE VOTES HAS BEEN";
+	gotoxy(9,23);
+	cout<<"SIMPLIFIED IN THIS SYSTEM.THE BASIC FUNCTION OF THE POLLING HAS BEEN";
+	gotoxy(9,24);
+	cout<<"REDUCED TO SINGLE KEY OPERATION.A SINGLE POLLING MANAGER CAN";
+	gotoxy(9,25);
+	cout<<"MANAGE LARGE NUMBER OF VOTERS";
+	gotoxy(20,22);
+	cout<<"Press any key to return";
+	getch();
+}
+     /*******************************************************/
+     /* THIS FUNCTION DISPLAY INFORMATION ABOUT USED PERIPHERALS  */ /*******************************************************/
+
+void EVS::REG_REQUIRMENT()//;REG_REQUAIRMENT()
+{
+	clrscr();
+	gotoxy(32,1);
+	cout<<"MINIMUM HARDWARE REQUIREMENT";
+	gotoxy(32,2);
+	cout<<"____________________________";
+	gotoxy(5,4);
+	cout<<"PROCESSOR ";
+	gotoxy(20,4);
+	cout<<":INTEL 80386 COMPATIBAL OR ABOVE";
+	gotoxy(5,6);
+	cout<<"ROM";
+	gotoxy(20,6);
+	cout<<":4MB OR ABOVE";
+	gotoxy(5,8);
+	cout<<"CHACE";
+	gotoxy(20,8);
+	cout<<":256KB OR ABOVE";
+	gotoxy(5,10);
+	cout<<"VDU";
+	gotoxy(20,10);
+	cout<<":VGA/SVGA";
+	gotoxy(5,12);
+	cout<<"HARD DISK";
+	gotoxy(20,12);
+	cout<<":4.3GB OR ABOVE";
+	gotoxy(5,14);
+	cout<<"FLOPPY DRIVE";
+	gotoxy(20,14);
+	cout<<":3.5";
+	gotoxy(25,14);
+	cout<<" INCH (1.44MB CAPACITY)";
+	gotoxy(5,16);
+	cout<<"PRINTER ";
+	gotoxy(20,16);
+	cout<<":LINE PRINTER(DOT MATRIX/INK JET)";
+	gotoxy(5,18);
+	cout<<"KEYBOARD";
+	gotoxy(20,18);
+	cout<<":NORMAL or PS2";
+	gotoxy(5,25);
+	cout<<"Press any key to continue...";
+	getch();
+	clrscr();
+	gotoxy(29,1);
+	cout<<"********************************";
+	gotoxy(29,2);
+	cout<<"* MINIMUM SOFTWARE REQUIREMENT *";
+	gotoxy(29,3);
+	cout<<"********************************";
+	gotoxy(32,5);
+	cout<<"________________";
+	gotoxy(32,6);
+	cout<<"OPERATING SYSTEM";
+	gotoxy(32,7);
+	cout<<"_________________";
+	gotoxy(5,9);
+	cout<<"WINDOW 95/98,   MS-DOS";
+	gotoxy(32,11);
+	cout<<"_____________________";
+	gotoxy(32,12);
+	cout<<"APPLICATION SOFTWARE";
+	gotoxy(32,13);
+	cout<<"_____________________";
+	gotoxy(5,15);
+	cout<<"C++ S/W		: BORLAND C++/TURBO C++";
+	gotoxy(5,25);
+	cout<<"Press any key to continue...";
+	getch();
+}
+     /*******************************************************/
+     /* THIS FUNCTION DISPLAY INFORMATION ABOUT THE SPECIAL INSTRUCTIONS  */
+/*******************************************************/
+
+void EVS::SPECIAL_INSTRUCTION()
+{
+	clrscr();
+	gotoxy(25,1);
+	cout<<"*************************************";
+	gotoxy(25,2);
+	cout<<"* SPECIAL INSTRUCTIONS FOR THE USER *";
+	gotoxy(25,3);
+	cout<<"*************************************";
+	gotoxy(2,5);
+	cout<<"PLEASE TAKE CARE OF THESE POINTS...";
+	gotoxy(5,7);
+	cout<<"1.BE SURE BEFORE DELETING ANY CONTENTS";
+	gotoxy(8,8);
+	cout<<"OTHERWISE NO FACILITY TO RECOVER IT.";
+	gotoxy(5,10);
+	cout<<"2.NOT USED ANY <FUNCTIONAL KEY>,<ESC>";
+	gotoxy(8,11);
+	cout<<"AND ANY <CURSOR KEY>";
+	gotoxy(5,13);
+	cout<<"3.YOU CAN USED ALPHABAT EITHER IN <CAPS>";
+	gotoxy(8,14);
+	cout<<"OR <CAPS LOCK>.";
+	gotoxy(5,16);
+	cout<<"4.DON'T USE <TAB> EXEMPT FOR THE NEXT FUNCTION.";
+	gotoxy(5,25);
+	cout<<"Press any key to continue...";
+	getch();
+}
+   /*******************************************************/
+   /*	THESE FUNCTION DISPLAY INFORMATION ABOUT THE MENUES	*/
+/*******************************************************/
+
+void EVS:: REG_MENUS()//;MENUS(void)
+{
+	clrscr();
+	MENU menu;
+	gotoxy(25,1);
+	cout<<"************************";
+	gotoxy(25,2);
+	cout<<"* HELP REGARDING MENUS *";
+	gotoxy(25,3);
+	cout<<"************************";
+	gotoxy(2,5);
+	menu.COLOR_DISPLAY("1::VOTER");
+	gotoxy(5,6);
+	cout<<"THIS OPTION CONTROL ALL THE FUNCTION RELATED TO THE VOTER";
+	gotoxy(2,7);
+	cout<<"THIS VOTER FUNCTION ADD THE VOTERS,DISLAY THE VOTER LIST,DISPLAY ";
+	gotoxy(2,8);
+	cout<<"THE VOTER INFORMATION ,RESET ALL THE STATUS,ISSUE THE VOTING ";
+	gotoxy(2,9);
+	cout<<"CARD TO VOTERS,THE FUNCTION TO GIVE VOTES BY THE VOTERS,TO DELETE";
+	gotoxy(2,10);
+	cout<<"VOTER RECORD FOR THE GIVEN VOTER NAME,TO GIVE VOTER NAME TO DELETE";
+	gotoxy(2,11);
+	cout<<"VOTER RECORD,TO CALCULATE THE VOTES GIVEN BY THE VOTERS";
+	gotoxy(2,13);
+	menu.COLOR_DISPLAY("2::CANDIDATE");
+	gotoxy(5,14);
+	cout<<"THIS OPTION CONTROL THE FUNCTIOS REGARDING CANDIDATE(DISPLAY ";
+	gotoxy(2,15);
+	cout<<"THE CANDIDATE INFORMATION,ADD CANDIDATE RECORD IN THE CANDIDATE FILE,";
+	gotoxy(2,16);
+	cout<<"TO RESET VOTES RECEIVED BY CANDIDATE TO ZERO,TO DISPLAY THE LIST OF THE";
+	gotoxy(2,17);
+	cout<<"VOTES RECEIVED BY CANDIDATE,TO ADD VOTES IN THE FAVOUR OF GIVEN CANDIDATE";
+	gotoxy(2,18);
+	cout<<"TO DELETE RECORD OF THE GIVEN CANDIDATE,TO GIVE CANDIDATE SERIOL NUMBER TO";
+	gotoxy(2,19);
+	cout<<"DELETE RECORD";
+	gotoxy(2,21);
+	menu.COLOR_DISPLAY("3::ELECTION DATE   ");
+	gotoxy(5,22);
+	cout<<"THIS MENU CONTROL ALL THE FUNCTION REGARDING ELECTION DATE(TO";
+	gotoxy(2,23);
+	cout<<"RETURN THE ELECTION DATE,TO RETURN THE VALIDITY OF THE TODAY DATE";
+	gotoxy(2,24);
+	cout<<"TO SET THE DATE FOR THE NEW ELECTION";
+	gotoxy(5,25);
+	menu.COLOR_DISPLAY("Press any key to continu...");
+	getch();
+}
+
+//*******************************************************
+//MAIN FUNCTION DISPLAYING MENU AND CALLS OTHER FUNCTIONS
+//*******************************************************
+
+void main(void)
+{
+	char ch,ch1,c=22;
+	VOTER voter;
+	CANDIDATE candidate;
+	VOTING_DATE voting_date;
+	DRAW draw;
+	MENU menu;
+	textbackground(YELLOW+RED);
+	textcolor(BLACK);
+
+	while(1)
+	{
+		clrscr();
+		draw.LINE_HOR(2,79,2,219);
+		draw.LINE_HOR(2,79,24,219);
+		draw.LINE_VER(2,79,24,219);
+		draw.LINE_VER(2,24,79,219);
+		gotoxy(32,8);
+		cout<<"ELECTION 2003  ";
+		gotoxy(31,9);
+		for(int i=1;i<=15;i++)
+		cout<<c;
+		gotoxy(30,11);
+		cout<<" 1.  ISSUE VOTING CARDS ";
+		gotoxy(30,12);
+		cout<<" 2.  ELECTION  ";
+		gotoxy(30,13);
+		cout<<" 3.  ADD VOTERS ";
+		gotoxy(30,14);
+		cout<<" 4.  ADD CANDIDATES ";
+		gotoxy(30,15);
+		cout<<" 5.  CALCULATING VOTES ";
+		gotoxy(30,16);
+		cout<<" 6.  OPTIONS ";
+		gotoxy(30,17);
+		cout<<" 7.  HELP";
+		gotoxy(30,18);
+		cout<<" 0.  QUIT ";
+		gotoxy(30,19);
+		cout<<"ENTER YOUR CHOICE: ";
+		ch=getch();
+		if(ch==27||ch=='0')
+			break;
+		else
+		if(ch=='1')
+			voter.ISSUE_VOTING_CARD();
+		else
+		if(ch=='2')
+			voter.ELECTION();
+		else
+		if(ch=='3')
+			voter.ADD_VOTER();
+		else
+		if(ch=='4')
+			candidate.ADD_CANDIDATE();
+		else
+		if(ch=='5')
+			voter.VOTE_CALCULATION();//VOTE_CALCULATION();
+		else
+		if(ch=='6')
+		{
+			while(1)
+			{
+				clrscr();
+				draw.LINE_HOR(2,79,2,219);
+				draw.LINE_HOR(2,79,24,219);
+				draw.LINE_VER(2,79,24,219);
+				draw.LINE_VER(2,24,79,219);
+				gotoxy(38,9);
+				cout<<"OPTIONS";
+				gotoxy(37,10);
+				for(int i=1;i<=9;i++)
+					cout<<c;
+				gotoxy(30,12);
+				cout<<" 1.  SET ELECTION DATE ";
+				gotoxy(30,13);
+				cout<<" 2.  VOTER INFORMATION ";
+				gotoxy(30,14);
+				cout<<" 3.  CANDIDATE INFORMATION ";
+				gotoxy(30,15);
+				cout<<" 4.  DELETE VOTER ";
+				gotoxy(30,16);
+				cout<<" 5.  DELETE CANDIDATE ";
+				gotoxy(30,17);
+				cout<<" 6.  LIST OF VOTERS ";
+				gotoxy(30,18);
+				cout<<" 0.  EXIT ";
+				gotoxy(30,20);
+				cout<<" ENTER  YOUR CHOICE:  ";
+				ch1=getch();
+				if(ch1==27||ch1=='0')
+					break;
+				else
+				if(ch1=='1')
+					voting_date.SET_DATE();
+				else
+				if(ch1=='2')
+					voter.VOTER_INFORMATION();
+				else
+				if(ch1=='3')
+				{
+					candidate.CANDIDATE_INFORMATION();
+					gotoxy(1,25);
+					cout<<"PRESS ANY KEY TO CNTINUE: ";
+					getch();
+			       }
+			       else
+			       if(ch1=='4')
+					voter.DELETE_VOTER();
+				else
+				if(ch1=='5')
+					candidate.DELETE_CANDIDATE();
+				else
+				if(ch1=='6')
+					voter.VOTER_LIST();
+				else
+					break;
+
+			}
+		}
+		else
+		if(ch=='7')
+		{
+			EVS E;
+			E.HELP();
+		}
+		else
+			break;
+	}
+}

@@ -1,0 +1,75 @@
+//Tree implementation
+//BINARY SEARCH TREE
+#include<iostream>
+using namespace std;
+class node
+{
+	public :
+	int data;
+	node *left;
+	node *right;
+	node();
+};
+node :: node()
+{
+	data=0;
+	left=right=NULL;
+}
+class Tree
+{
+	public  :
+	node* root;
+	Tree();
+	void insert_value(node *root,int data);
+	void insert(int data);
+	void display(node* temp);
+};
+//constructor
+Tree :: Tree()
+{
+	root=NULL;
+}
+void Tree :: insert_value(node *root,int data)
+{
+	node *temp;
+	if (root==NULL)
+	{
+		temp=new node;
+		temp->data=data;
+		temp->left=NULL;
+		temp->right=NULL;
+		root=temp;
+	}
+	else if (data<=root->data )
+		  insert_value(root->left,data);
+	//data is greater than root->data
+	else
+		insert_value(root->right,data);
+}
+void Tree :: insert(int data)
+{
+	insert_value(root,data);
+}
+void Tree::display(node* temp)
+{
+    if(temp->left ==NULL && temp->right==NULL){
+        cout<<temp->data;
+        return;}
+    else if(temp->left !=NULL && temp->right!=NULL){
+        display(temp->left);
+        display(temp->right);}
+    else if(temp->left !=NULL && temp->right==NULL)
+        display(temp->left);
+    else
+        display(temp->right);
+    cout<<temp->data;
+}
+int main()
+{
+	Tree t;
+	t.insert(5);
+	t.insert(10);
+	t.insert(3);
+        t.display(t.root);
+	return 0;
+}
