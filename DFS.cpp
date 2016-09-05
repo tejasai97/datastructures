@@ -1,0 +1,78 @@
+// DFS.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+#include<iostream>
+using namespace std;
+class DFS
+{
+private:
+	int **d, *stack, *visited, *visit, k, m, v, top, n, p, q, size2, size3, size4;
+public:
+	void input();
+};
+void DFS::input()
+{
+	int j, i, top = 0;
+	cout << "enter p and q";
+	cin >> p >> q;
+	d = new int*[p];
+	for (int i = 0; i<p; i++)
+	{
+		d[i] = new int[q];
+	}
+	cout << "enter the size of visited node";
+	cin >> size2;
+	visited = new int[size2];
+	cout << "enter the size of visit";
+	cin >> size3;
+	visit = new int[size3];
+	cout << "enter the size of stack";
+	cin >> size4;
+	stack = new int[size4];
+	cout << "enterno of vertices";
+	cin >> n;
+	cout << "ente no of edges";
+	cin >> m;
+	cout << "\nEDGES \n";
+	for (k = 1; k <= m; k++)
+	{
+		cin >> i >> j;
+		
+	}
+
+	cout << "enter initial vertex";
+	cin >> v;
+	cout << "ORDER OF VISITED VERTICES";
+	cout << v << " ";
+	visited[v] = 1;
+	k = 1;
+	while (k<n)
+	{
+		for (j = n; j >= 1; j--)
+			if (d[v][j] != 0 && visited[j] != 1 && visit[j] != 1)
+			{
+				visit[j] = 1;
+				stack[top] = j;
+				
+				top++;
+			}
+		v = stack[--top];
+		cout << v << " ";
+		k++;
+		visit[v] = 1;
+		visited[v] = 1;
+	}
+}
+
+int main()
+{
+	DFS d;
+	d.input();
+	return 0;
+}
+
+
+
+
+
